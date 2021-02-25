@@ -1,11 +1,17 @@
 import React, {useRef, useEffect, useState} from 'react'
 import {Canvas, useFrame, useThree } from 'react-three-fiber'
 import * as THREE from "three";
+import { ZeroCurvatureEnding } from 'three';
 
 const Scena = () => {
-    var [dir, setDir] = useState(new THREE.Vector3(1, 2, 3));
+    var [dir, setDir] = useState(new THREE.Vector3(x, y, z));
     var [direction, setDirection] = useState(null);
    // var dir = new THREE.Vector3(1, 2, 3);
+
+    var [x, setX] = useState(0);
+    var [y, setY] = useState(0);
+    var [z, setZ] = useState(0);
+
     var [position, setPosition] = useState([0, 0, 5]);
 
     var [distance, setDistance] = useState(5);
@@ -14,39 +20,46 @@ const Scena = () => {
 
     var [aspect, setAspect] = useState(0);
 
+    const rad = 0.09;
+
     const style = {
         width: '100%',
         height: '900px'
     }
 
-    const keyup = () => {
+    const keyup = (event) => {
      
-        setAspect(0);
-        setSpeed(0);
-        
-        setPosition(position);
+        let key = event.key;
 
-    
-        setDir(dir);
-        console.log("FINAL POSITION: " + dir.y);
+        if (key === 'ArrowUp') {
+            setSpeed(0);
+           } else if (key === 'ArrowRight') {
+ 
+           } else if (key === 'ArrowLeft') {
+ 
+           } else if (key === 'ArrowDown') {
+            setSpeed(0);
+           }
+
+
+ 
     }
     
     const keydown = (event) => {
 
 
   
-            console.log("STARTING: " + dir.y)
+   
  
         
         let key = event.key;
         if (key === 'ArrowUp') {
-            
-         //   setDistance(distance -0.1)
-       setSpeed(0.1);
+    
+            setSpeed(0.1);
         } else if (key === 'ArrowRight') {
-            setAspect(1);
+            setAspect(aspect + rad);
         } else if (key === 'ArrowLeft') {
-            setAspect(-1);
+            setAspect(aspect - rad);
         } else if (key === 'ArrowDown') {
             setSpeed(-0.1);
         }
@@ -55,9 +68,7 @@ const Scena = () => {
     }
     const ref = useRef(null);
     useEffect(() => {
-        // const canvas = ref.current;
-        // const context = canvas.getContext('3d');
-        
+      
     }, [keydown])
 
 
@@ -85,26 +96,17 @@ const Scena = () => {
       useFrame(() => {
        
         if (ref.current)  {
-//console.log("BEFORE:" + ref.current.rotation.x);
-            if (aspect > 0) {
-                ref.current.rotation.y += Math.PI / 242;
+ 
+
+            ref.current.rotation.y = aspect;
+            ref.current.getWorldDirection(dir);
+            ref.current.position.addScaledVector(dir, speed);
+            setPosition(ref.current.position);
             
- 
-              
-            } else if (aspect < 0) {
-                ref.current.rotation.y -= Math.PI / 242;
-             
-    
-            } 
 
-
-            ref.current.getWorldDirection( dir );
-
-            ref.current.position.addScaledVector( dir, speed );
+//            setDir(dir);
  
-            position = ref.current.position;
  
-         //   ref.current.updateMatrixWorld()
         }
         
     }
