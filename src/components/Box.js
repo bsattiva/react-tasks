@@ -5,12 +5,12 @@ import Chrystal from '../textures/chrystal.jpg'
 
 const Box = (props) => {
 
-const {glass} = useLoader(TextureLoader, Chrystal);
+const gold = useLoader(TextureLoader, '/textures/gold.jpeg');
     return (
        
             <mesh position={[props.position.x, props.position.y, props.position.z]}>
               <boxBufferGeometry />
-              <meshNormalMaterial map={glass} attach="material" />
+              <meshNormalMaterial map={gold} attach="material" />
             </mesh>
           )
    

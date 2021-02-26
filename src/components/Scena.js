@@ -4,14 +4,16 @@ import * as THREE from "three";
 import useSound from 'use-sound';
 import Grid from './Grid';
 import Box from './Box';
+import Moon from './Moon';
 import thud from '../sounds/thud.wav';
 import steps from '../sounds/steps.wav';
 
 
 const Scena = () => {
 
- 
-
+    var rX = parseInt(Math.floor(Math.random() * Math.floor(7)));
+    var [randX, setRandX] = useState(parseInt(Math.floor(Math.random() * Math.floor(7))));
+    var [randZ, setRandZ] = useState(parseInt(Math.floor(Math.random() * Math.floor(7))));
     var [dir, setDir] = useState(new THREE.Vector3(x, y, z));
     var [direction, setDirection] = useState(null);
    // var dir = new THREE.Vector3(1, 2, 3);
@@ -24,19 +26,19 @@ const Scena = () => {
     const [playSteps, {stop}] = useSound(steps);
 
     var [position, setPosition] = useState([0, 0, 12]);
-
+    var [meshIndex, setMeshIndex] = useState(19);
     var [distance, setDistance] = useState(5);
 
     var [speed, setSpeed] = useState(0);
 
     var [aspect, setAspect] = useState(0);
-    var [meshPosition, setMeshPosition] = useState({x: 0, y:0, z:5});
+    var [meshPosition, setMeshPosition] = useState({x: randX, y:0, z:randZ});
 
     var [move, setMove] = useState('ArrowUp');
     var [moveChanged, setMoveChanged] = useState(false);
 
     var [played, setPlayed] = useState(false);
- 
+
     var [rad, setRad] = useState(-0.08);
 
     const style = {
@@ -54,8 +56,8 @@ const Scena = () => {
         
 
         let key = event.key;
-        console.log("key: " + key);
-        console.log("move: " + move);
+        // console.log("key: " + key);
+        // console.log("move: " + move);
         if (key!== move) {
             setMoveChanged(true);
         } else {
@@ -121,8 +123,8 @@ const Blaster = () => {
 
     const intersect = (pos1, pos2) =>{
 
-        console.log("POSITION 1: " + pos1.x + " " + pos1.y + " " + pos1.z);
-        console.log("POSITION 2: " + pos2.x + " " + pos2.y + " " + pos2.z);
+        // console.log("POSITION 1: " + pos1.x + " " + pos1.y + " " + pos1.z);
+        // console.log("POSITION 2: " + pos2.x + " " + pos2.y + " " + pos2.z);
         var diff = Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
         
  
@@ -147,15 +149,17 @@ const Blaster = () => {
     
     const keydown = (event) => {
 
-
-  if (!played) {
+    let key = event.key;
+    let keys = ['ArrowUp','ArrowRight','ArrowLeft','ArrowDown'];
+    console.log("MESHPOSITION: " + meshPosition.x + " " + meshPosition.z + " " + randX);
+  if (!played && keys.includes(key)) {
       playSteps();
       setPlayed(true);
   }
    
  
         
-        let key = event.key;
+        
         if (key === 'ArrowUp') {
     
             setSpeed(0.1);
@@ -175,22 +179,6 @@ const Blaster = () => {
     }, [keydown])
 
 
-const Blocks = () => {
-var blocks = [];
-
- for (let i = 0; i < 10; i++) {
-     blocks.push
-     (<mesh position={i * 5, 0, i*5}>
-        <boxBufferGeometry />
-        <meshNormalMaterial />
-      </mesh>)
- } 
-
- return (<>
- {blocks}
- </>)
-
-}
 
     const Camera = (props) => {
       const ref = useRef()
@@ -203,17 +191,14 @@ var blocks = [];
      
       useFrame(() => {
  
-        if (ref.current && !intersectArray(positions, meshPosition))  {
+        if (ref.current && !intersect(position, meshPosition))  {
  
 
             ref.current.rotation.y = aspect;
             ref.current.getWorldDirection(dir);
             ref.current.position.addScaledVector(dir, speed);
             setPosition(ref.current.position);
-            
 
-
- 
  
         } else {
             if (played && intersect(position, meshPosition)) {
@@ -231,15 +216,21 @@ var blocks = [];
     }
    const positions = []; 
    const bx = [];
-   for (var i = 0; i< 7; i++) {
-       for (var j = 0; j<7; j++) {
-           bx.push(<Box position={{x: -5 + (i*2), y:0, z: -5 + (j*2)}} />);
-           positions.push({x: -5 + (i*2), y:0, z: -5 + (j*2)});
-       }
-       
-   }
+   (() => {
+    for (var i = 0; i< 7; i++) {
+        for (var j = 0; j<7; j++) {
+            bx.push(<Box position={{x: -5 + (i*2), y:0, z: -5 + (j*2)}} />);
+            positions.push({x: -5 + (i*2), y:0, z: -5 + (j*2)});
+        }
+        
+    }
+    
+    })();
 
 
+
+
+//setMeshPosition(positions[Math.floor() * Math.floor(49)]);
 
     return (
         <>
@@ -254,7 +245,9 @@ var blocks = [];
                         bx
                     }
                </Suspense>
-
+                <Suspense fallback={<div>Moon loading :)</div>}>
+                    <Moon position={{x:7, y:35, z:-113}} />
+                </Suspense>
                 <Suspense fallback={<>Loading...</>}>
                 
                 <Grid />
