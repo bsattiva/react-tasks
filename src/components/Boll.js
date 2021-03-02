@@ -1,3 +1,4 @@
+
 import React, {useRef, useState, useEffect} from 'react'
 import { useFrame } from 'react-three-fiber'
 
@@ -7,6 +8,8 @@ const Boll = (props) => {
      const [position, setPosition] = useState(props.position);
      const [shoot, setShoot] = useState(props.visible);
     const [visible, set] = useState(props.visible)
+    var [target, setTarget] = useState(props.targ);
+
      useEffect(() => {
         if (ref.current)
          void ref.current.lookAt(props.dir)
@@ -15,7 +18,11 @@ const Boll = (props) => {
     useFrame(() => {
         if (ref.current) {
             ref.current.position.addScaledVector(props.dir, speed);
-            
+
+            if (ref.current.position.distanceTo(props.targ) < 1) {
+                props.handler();
+            }
+
         }
         
     })
@@ -30,8 +37,8 @@ const Boll = (props) => {
         <group>
         {props.visible && (
         <mesh position={[position.x, position.y, position.z]} ref={ref} >
-            <sphereGeometry  attach="geometry" args={[0.02, 32, 32]}/>
-            <meshBasicMaterial color="#E5FFCC" attach="material" />
+            <sphereGeometry  attach="geometry" args={[0.01, 32, 32]}/>
+            <meshBasicMaterial color="#00FF00" attach="material" />
         </mesh>
         )}
         </group>

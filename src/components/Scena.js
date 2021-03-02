@@ -6,9 +6,19 @@ import Grid from './Grid';
 import Box from './Box';
 import Moon from './Moon';
 import FireBall from './Boll';
+import Monkey from './Monkey';
+import Panel from './Panel';
+ 
+import Control from './Control';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 import thud from '../sounds/thud.wav';
 import steps from '../sounds/steps.wav';
+import laser from '../sounds/laser.wav';
+import shot from '../sounds/shoot.wav';
+import roar from '../sounds/roar.mp3';
+import victory from '../sounds/victory.mp3';
+import { getDefaultNormalizer } from '@testing-library/react';
+
 
 
 const Scena = () => {
@@ -20,15 +30,19 @@ const Scena = () => {
     var [randZ, setRandZ] = useState(parseInt(Math.floor(Math.random() * Math.floor(7))));
 
     var [dir, setDir] = useState(new THREE.Vector3(x, y, z));
+    var [monsterDir, setMonsterDir] = useState(new THREE.Vector3(-1,0,-1));
     var [direction, setDirection] = useState(null);
-   // var dir = new THREE.Vector3(1, 2, 3);
-
+ 
     var [x, setX] = useState(0);
     var [y, setY] = useState(0);
     var [z, setZ] = useState(0);
 
     const [playThud] = useSound(thud); 
     const [playSteps, {stop}] = useSound(steps);
+    const [setPlayRoar] = useSound(roar);
+    const [playLaser] = useSound(laser);
+    const [playShoot] = useSound(shot);
+    const [playVictory] = useSound(victory);
 
     var [position, setPosition] = useState([0, 0, 12]);
     var [ballPosition, setBallPosition] = useState({x:0, y:0, z:11.8});
@@ -44,16 +58,22 @@ const Scena = () => {
     var [moveChanged, setMoveChanged] = useState(false);
 
     var [played, setPlayed] = useState(false);
-
+    var [skull, setSkull] = useState(false);
+    var [panel, setPanel] = useState(true);
     var [rad, setRad] = useState(-0.08);
-
+    var [time, setTime] = useState(null);
+    var [start, setStart] = useState(true);
     var [fireballs, setFireballs] = useState([<FireBall position={ballPosition} />]);
-
+   // var [mPosition, setMposition] = useState([0,0.15,8]);
+    var [mPosition, setMposition] = useState([randX,0.15,randZ]);
+    var [win, setWin] = useState(0);
     const style = {
         width: '100%',
         height: '100vh',
         background: 'black'
     }
+
+    
 
     const keyup = (event) => {
      
@@ -70,6 +90,10 @@ const Scena = () => {
             setMoveChanged(true);
         } else {
             setMoveChanged(false);
+        }
+
+        if(key === 't') {
+           setTimeout(setVisible(false), 1000);
         }
         
         if (key === 'ArrowUp') {
@@ -91,7 +115,7 @@ const Scena = () => {
 
     function Light({ brightness, color }) {
         return (
-          <rectAreaLight
+          <hemisphereLight
             width={3}
             height={3}
             intensity={brightness}
@@ -106,7 +130,21 @@ const Scena = () => {
 
 
 
-      
+    const blowSkull = () => {
+        setSkull(false);
+        setPlayRoar();
+        setTime(new Date());
+        setWin(win + 1);
+        if (win > 5) {
+            playVictory();
+            alert("YOU WIN!");
+            setSpeed(0);
+            setSkull(false);
+            setPanel(true);
+            setPosition([0,0,12]);
+            
+        }
+    }  
 
     const intersectArray = (arr, pos) => {
         let status = false;
@@ -114,8 +152,7 @@ const Scena = () => {
 
 
         for (var i = 0; i<arr; i++) {
-
-            console.log('position' + i);
+ 
 
             if (intersect(arr[i], pos)) {
                 status = true;
@@ -127,8 +164,7 @@ const Scena = () => {
 
     const intersect = (pos1, pos2) =>{
 
-        // console.log("POSITION 1: " + pos1.x + " " + pos1.y + " " + pos1.z);
-        // console.log("POSITION 2: " + pos2.x + " " + pos2.y + " " + pos2.z);
+ 
         var diff = Math.abs(pos1.x - pos2.x) + Math.abs(pos1.y - pos2.y) + Math.abs(pos1.z - pos2.z);
         
  
@@ -141,60 +177,88 @@ const Scena = () => {
             return true;
         } else {
 
-            if(speed !== 0) {
-
-            console.log(moveChanged);
-            console.log("DIFF: " + diff);
-            }
+            
             return false;
         }
 
     }
 
-    
-    
-    const keydown = (event) => {
-
-    let key = event.key;
-    
-    let keys = ['ArrowUp','ArrowRight','ArrowLeft','ArrowDown'];
-
-  if (!played && keys.includes(key)) {
-      playSteps();
-      setPlayed(true);
-  }
-   
-  if (key === 't') {
-   setVisible(true);
-  }
  
-        
-        
-        if (key === 'ArrowUp') {
-    
-            setSpeed(0.1);
-        } else if (key === 'ArrowRight') {
-            setAspect(aspect + rad);
-        } else if (key === 'ArrowLeft') {
-            setAspect(aspect - rad);
-        } else if (key === 'ArrowDown') {
-            setSpeed(-0.1);
-        }
-    //    console.log(position);
+    const containerRef = useRef();
+    const { current } = containerRef;
+
+ 
+
+ 
+
+  
+    useEffect(() => {console.log("LOADEDDDD"); document.getElementsByTagName("canvas")[0].focus();}, [current]);
+
+    const keydown = (event) => {
+ 
+            let key = event.key;
+            
+            let keys = ['ArrowUp','ArrowRight','ArrowLeft','ArrowDown'];
+
+            
+
+            if (!played && keys.includes(key)) {
+                playSteps();
+                setPlayed(true);
+            }
+            
+            if (key === 't') {
+                setVisible(true);
+                playLaser();
+                // console.log("FIREBALL POSITION: " + ballPosition.x + " " + ballPosition.z)
+
+            }
+            
+                
+                
+                if (key === 'ArrowUp') {
+            
+                    setSpeed(0.1);
+                } else if (key === 'ArrowRight') {
+                    setAspect(aspect + rad);
+                } else if (key === 'ArrowLeft') {
+                    setAspect(aspect - rad);
+                } else if (key === 'ArrowDown') {
+                    setSpeed(-0.1);
+                }
+ 
      
     }
-    const ref = useRef(null);
-    useEffect(() => {
-      
-    }, [keydown])
+ 
 
     const [visible, setVisible] = useState(false);
-
-    const Shoot = () => {
-        setVisible(true);
+    const stopStart = () => {
+        setPanel(false);
     }
+
+
       
-      
+    const skullHandler = () => {
+ 
+        console.log("START")
+        setPanel(false);
+        setSkull(true);
+        
+    }
+
+    const gameOver = () => {
+        setPlayRoar();
+        alert("GAME OVER!!!");
+        setSpeed(0);
+        setSkull(false);
+        setPanel(true);
+        setPosition([0,0,12]);
+    }
+
+
+    const setMonkey = (pos) => {
+        setMposition(pos);
+    }
 
 
     const Camera = (props) => {
@@ -208,9 +272,14 @@ const Scena = () => {
      
       useFrame(() => {
  
-        if (ref.current && shoot) {
-
+        if (time !== null && !skull && ((new Date() - time)/1000 ) > 15) {
+            console.log("TADA");
+            setPlayRoar();
+            setSkull(true);
+       //     setMposition([0,0,11]);
+            setTime(null);
         }
+
 
         if (ref.current && !intersect(position, meshPosition))  {
  
@@ -219,7 +288,7 @@ const Scena = () => {
             ref.current.getWorldDirection(dir);
             ref.current.position.addScaledVector(dir, speed);
             setPosition(ref.current.position);
-            
+    
 
  
         } else {
@@ -227,6 +296,7 @@ const Scena = () => {
                 stop();
                 setPlayed(false);
                 setRad(-rad);
+                gameOver();
             }
             
         }
@@ -255,7 +325,7 @@ const Scena = () => {
         <>
             <Canvas style={style} tabIndex="0" onKeyDown={keydown} onKeyUp={keyup}>
                 <Camera position={position} />
-                <Light brightness={11.6} color={"#bdefff"}  />
+                <Light brightness={4.6} color={"#FFFFFF"}  />
                 {/* <Blaster position={[115,0,10]} /> */}
                 <Suspense fallback={<>Loading...</>}>  
                     {/* <Box position={meshPosition} /> */}
@@ -272,8 +342,16 @@ const Scena = () => {
                 <Grid />
               </Suspense>
  
-                <FireBall position={ballPosition} pos={position} dir={dir} visible={visible}/> 
-                {/* <Shoot position={ballPosition} dir={dir}/> */}
+                <FireBall position={ballPosition} pos={position} targ={mPosition} handler={blowSkull} dir={dir} visible={visible}/> 
+
+
+                <Monkey position={mPosition} pos={position} monster={skull} dir={monsterDir} cadir={dir} handler={setMonkey} target={gameOver} />
+
+                <Suspense fallback={<>Loading</>}>
+                    <Panel position={[0,0,10]} visible={panel} handler={skullHandler}/>
+                </Suspense>
+
+                
             </Canvas>
         </>
     )
